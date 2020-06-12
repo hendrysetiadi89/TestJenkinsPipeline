@@ -8,33 +8,76 @@ pipeline {
         string(defaultValue: '', description: 'put branch name or tag', name: 'BranchName', trim: true)
         booleanParam(defaultValue: false, description: 'which app', name: 'IsRelease')
     }
-    tools {
-        //put tool variable here
-    }
     stages {
         stage('Meng-clone') {
             steps {
-                currentBuild.description = "${Application} $BranchName $IsRelease"
-                //step untuk clone
-                echo "Siap Clone nih"
+                script{
+                    currentBuild.description = "${params.Application} ${params.BranchName} ${params.IsRelease}"
+                    if(params.BranchName.startsWith('tags')) {
+                        checkout([$class: 'GitSCM',
+                                  branches: [[name: "refs/${params.BranchName}"]],
+                                  userRemoteConfigs: [[
+                                                              //credentialsId: 'GITHUB_CRED',
+                                                              refspec: "+refs/tags/*:refs/remotes/origin/tags/*",
+                                                              url: 'https://github.com/hendrysetiadi89/HelloWorldTest'
+                                                      ]],
+                                  extensions: [[$class: 'CloneOption', reference: '', shallow: true, timeout: 30]]
+                        ])
+                    } else {
+                        checkout([$class: 'GitSCM',
+                                  branches: [[name: "${params.BranchName}"]],
+                                  userRemoteConfigs: [[
+                                                              //credentialsId: 'GITHUB_CRED',
+                                                              name: 'origin',
+                                                              refspec: "+refs/heads/${params.BranchName}:refs/remotes/origin/${params.BranchName}",
+                                                              url: 'https://github.com/hendrysetiadi89/HelloWorldTest'
+                                                      ]],
+                                  extensions: [[
+                                                       $class: 'CloneOption',
+                                                       noTags: true,
+                                                       honorRefspec: true,
+                                                       reference: '',
+                                                       shallow: true,
+                                                       timeout: 30
+                                               ]]
+                        ])
+                    }
+                }
+            }
+            post {
+                success {
+                    echo 'Clone Success'
+                }
             }
         }
         stage('Nge-build') {
             steps {
                 // step untuk build apk
                 echo "Siap Build nih"
+                script {
+                    if (params.IsRelease) {
+                        sh 'gradle assembleRelease'
+                    } else {
+                        sh 'gradle assembleDebug'
+                    }
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts(artifacts: '**/*.apk', allowEmptyArchive: true)
+                }
             }
         }
     }
     post {
         always {
-            echo 'Finished'
+            echo 'Finished Job'
         }
         success {
-            echo 'Success'
+            echo 'Success Job'
         }
         failure {
-            echo 'Gagal nih'
+            echo 'Gagal Job'
         }
     }
 }
