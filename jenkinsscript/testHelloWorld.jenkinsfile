@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+    environment {
+        VARIABLE_COBA_COBA = "aaa"
+    }
+    parameters{
+        choice(choices: ['customerapp', 'sellerapp'], description: 'which app', name: 'Application')
+        string(defaultValue: '', description: 'put branch name or tag', name: 'BranchName', trim: true)
+        booleanParam(defaultValue: false, description: 'which app', name: 'IsRelease')
+    }
+    tools {
+        //put tool variable here
+    }
+    stages {
+        stage('Meng-clone') {
+            steps {
+                currentBuild.description = "${Application} $BranchName $IsRelease"
+                //step untuk clone
+                echo "Siap Clone nih"
+            }
+        }
+        stage('Nge-build') {
+            steps {
+                // step untuk build apk
+                echo "Siap Build nih"
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Finished'
+        }
+        success {
+            echo 'Success'
+        }
+        failure {
+            echo 'Gagal nih'
+        }
+    }
+}
