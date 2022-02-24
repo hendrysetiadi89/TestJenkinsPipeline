@@ -8,6 +8,9 @@ pipeline {
         string(defaultValue: '', description: 'put branch name or tag', name: 'BranchName', trim: true)
         booleanParam(defaultValue: false, description: 'which app', name: 'IsRelease')
     }
+    tools {
+        gradle 'gradle 6.9.1'
+    }
     stages {
         stage('Meng-clone') {
             steps {
